@@ -26,13 +26,14 @@ void SECRETARY_process_main(void)
 	while(BSP_UART_data_ready(UART2_ID)) {
 		c = BSP_UART_getc(UART2_ID);
 		buffer2[index] = c;
-		if(32 == c) {
-			buffer2[index] = '\0';
+		if(27 == c) {
+			buffer2[index] = '\n';
 			find_command(buffer2);
+			for(int i=0;i<BUFFER_SIZE;i++) buffer2[i]=0;
 			index = 0;
 		} else if(index < BUFFER_SIZE - 1) {
+			printf("%c",buffer2[index]);
 			index ++;
-			printf(buffer2);
 		}
 	}
 }
@@ -68,6 +69,7 @@ const uint8_t month_duration[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 
 
 static void find_command(char * buffer)
 {
+	maj2min(buffer);
 	RTC_TimeTypeDef currentTime;
 	RTC_DateTypeDef currentDate;
 	bool badstring, printdate, printtime;
@@ -87,7 +89,7 @@ static void find_command(char * buffer)
 			currentDate.Date = (buffer[8]-'0') * 10 + (buffer[9]-'0');
 			currentDate.Month = (buffer[11]-'0') * 10 + (buffer[12]-'0');
 			currentDate.Year = (buffer[14]-'0') * 10 + (buffer[15]-'0');
-			if(currentDate.Month >= 1 && currentDate.Month <= 12 && currentDate.Date >= 1 && currentDate.Date <= month_duration[currentDate.Month] && currentDate.Year < 100)
+			if(currentDate.Month >= 1 && currentDate.Month <= 12 && currentDate.Date >= 1 && currentDate.Date <= month_duration[currentDate.Month-1] && currentDate.Year < 100)
 			{
 				BSP_RTC_set_date(&currentDate);
 				printdate = true;
@@ -153,4 +155,15 @@ static void find_command(char * buffer)
 		printf("The hour is %02d:%02d:%02d.\n", currentTime.Hours, currentTime.Minutes, currentTime.Seconds);
 	if(badstring)
 		printf("Bad command -> press help to list commands\n");
+}
+
+void maj2min(char* s) {
+	char c=s[0];
+	for(int i=0;c!='\0';i++){
+		c=s[i];
+		if (c>='A' && c<='Z'){
+			c+= 'a'-'A';
+			s[i]=c;
+		}
+	}
 }
