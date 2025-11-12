@@ -1,13 +1,15 @@
-/*
- * servo.h
- *
- *  Created on: Nov 12, 2025
- *      Author: guy
- */
+#ifndef SERVO_H
+#define SERVO_H
 
-#ifndef SERVO_H_
-#define SERVO_H_
+#include "config.h"
+#include "stm32g4_timer.h"
+#include "stm32g4_uart.h"
+#include "stm32g4_utils.h"
+#include <stdint.h>
 
+void SERVO_init(void);
+void SERVO_set_position(uint16_t position);
+void SERVO_process_test(void);
+uint16_t SERVO_get_position(void);
 
-
-#endif /* SERVO_H_ */
+#endif

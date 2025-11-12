@@ -13,4 +13,6 @@ void SUN_TRACKER_process_main(void);
 
 void SUN_TRACKER_set_new_pos(double latitude, double longitude);
 
+void SUN_TRACKER_set_new_pos(double latitude, double longitude);
+
 #endif /* SUN_TRACKER_SUN_TRACKER_H_ */

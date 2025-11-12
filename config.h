@@ -23,7 +23,7 @@
 #define UART2_ON_PA3_PA2
 #define UART1_ON_PA10_PA9
 
-#define USE_BSP_TIMER		0
+#define USE_BSP_TIMER		1
 #define USE_BSP_EXTIT		1
 
 #define USE_RTC				1

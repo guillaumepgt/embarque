@@ -15,6 +15,7 @@
 #include "stm32g4_uart.h"
 #include "stm32g4_utils.h"
 #include "sun_tracker.h"
+#include "servo.h"
 
 #include <stdio.h>
 
@@ -47,9 +48,15 @@ int main(void)
 	//useless_function();
 	//while(!BSP_UART_button(UART2_ID));
 
+	SERVO_init();
+	SERVO_set_position(0);
 	while(1)
 	{
 		SUN_TRACKER_process_main();
+		//SERVO_process_test();
+		//if (BSP_UART_button(UART2_ID)) {
+
+		//}
 	}
 
 }
