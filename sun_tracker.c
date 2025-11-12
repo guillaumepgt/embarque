@@ -69,16 +69,18 @@ void SUN_TRACKER_process_main(void)
 	SECRETARY_process_main();
 	if(flag_1s)
 	{
-		HAL_GPIO_TogglePin(LED_GREEN_GPIO, LED_GREEN_PIN);
+		//HAL_GPIO_TogglePin(LED_GREEN_GPIO, LED_GREEN_PIN);
 		flag_1s = false;
 		SolTrackTime_t time;
-		//données de test temporaires.
-		time.year = 	(int32_t)(20) + 2000;	//2020
-		time.month = 	(int32_t)(4);			//avril
-		time.day = 		(int32_t)(1);			//1er
-		time.hour = 	(int32_t)(8);
-		time.minute = 	(int32_t)(30);
-		time.second = 	(double)(40.4);
+		RTC_DateTypeDef currentDate;
+		RTC_TimeTypeDef currentTime;
+		BSP_RTC_get_time_and_date(&currentTime,&currentDate);
+		time.year = (int32_t)(currentDate.Year) + 2000;
+		time.month = (int32_t)(currentDate.Month);
+		time.day = (int32_t)(currentDate.Date);
+		time.hour = (int32_t)(currentTime.Hours);
+		time.minute = (int32_t)(currentTime.Minutes);
+		time.second = (double)(currentTime.Seconds);
 
 
 		//variable qui serviront à receuillir les résultats des calculs
