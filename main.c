@@ -52,7 +52,7 @@ int main(void)
 	SERVO_set_position(0);
 	while(1)
 	{
-		//SUN_TRACKER_process_main();
+		SUN_TRACKER_process_main();
 		SERVO_process_test();
 		//if (BSP_UART_button(UART2_ID)) {
 
