@@ -102,12 +102,12 @@ static void SUN_TRACKER_compute_sun_position(SolTrackTime_t * time, SolTrackPosi
 		printf("Date : %02d/%02d/%04d\n", time->day, time->month, time->year);
 		printf("Heure : %02d:%02d:%02d\n", (int)time->hour, (int)time->minute, (int)time->second);
 		printf("Jour Julien : %.5f\n", pos->julianDay);
-		printf("Lever  : %02d:%02d (Azimuth = %.2f°)\n",
-			   riseSet->riseTime.hour, riseSet->riseTime.minute, riseSet->riseAzimuth);
-		printf("Zénith : %02d:%02d (Altitude = %.2f°)\n",
-			   riseSet->transitTime.hour, riseSet->transitTime.minute, riseSet->transitAltitude);
-		printf("Coucher: %02d:%02d (Azimuth = %.2f°)\n",
-			   riseSet->setTime.hour, riseSet->setTime.minute, riseSet->setAzimuth);
+		printf("Lever  : %02d (Azimuth = %.2f°)\n",
+			   riseSet->riseTime, riseSet->riseAzimuth);
+		printf("Zénith : %02d (Altitude = %.2f°)\n",
+			   riseSet->transitTime, riseSet->transitAltitude);
+		printf("Coucher: %02d, (Azimuth = %.2f°)\n",
+			   riseSet->setTime, riseSet->setAzimuth);
 		printf("Longitude de l’écliptique : %.4f°\n", pos->longitude);
 		printf("Ascension droite           : %.4f h\n", pos->rightAscension);
 		printf("Déclinaison                : %.4f°\n", pos->declination);
