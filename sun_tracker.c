@@ -11,6 +11,8 @@
 #include "stm32g4_systick.h"
 #include "secretary.h"
 #include "servo.h"      // AJOUT : Nécessaire pour piloter le servomoteur
+#include "secretary.h"
+
 
 //Réglages de la librairie SolTrack :
 #define	USE_DEGREES						1		// Input (geographic position) and output are in degrees
@@ -23,6 +25,7 @@ static SolTrackLocation_t loc;
 static void process_ms(void);
 static void SUN_TRACKER_compute_sun_position(SolTrackTime_t * time, SolTrackPosition_t * pos, SolTrackRiseSet_t * riseSet);
 
+int mode;
 
 void SUN_TRACKER_init(void)
 {
@@ -51,9 +54,10 @@ void SUN_TRACKER_init(void)
 	BSP_RTC_set_date(&currentDate);
 
 	BSP_systick_add_callback_function(&process_ms);
-
+	mode = SECRETARY_get_mode();
     // Initialisation du servo (si ce n'est pas fait dans le main.c)
     SERVO_init();
+
 }
 
 volatile bool flag_1s = false;
@@ -74,6 +78,8 @@ void SUN_TRACKER_process_main(void)
 	SECRETARY_process_main();
 	if(flag_1s)
 	{
+		mode = SECRETARY_get_mode();
+
 		//HAL_GPIO_TogglePin(LED_GREEN_GPIO, LED_GREEN_PIN);
 		flag_1s = false;
 		SolTrackTime_t time;
@@ -102,17 +108,20 @@ void SUN_TRACKER_process_main(void)
         double azimuth = pos.azimuthRefract;
 
         // Logique de positionnement
-        if (azimuth < 90.0 || azimuth > 270.0) {
-            // Côté NORD (Nuit ou hors zone de suivi) : retour à 0
-            position = 0;
-        } else {
-            // Côté SUD (Est -> Ouest) : proportionnel
-            // Plage Azimuth : 90 à 270 (soit une étendue de 180 degrés)
-            // Plage Servo : 0 à 100
-            // Formule : (AzimuthActuel - OffsetEst) * (PlageServo / PlageAzimuth)
-            position = (uint16_t)((azimuth - 90.0) * (100.0 / 180.0));
+        if (mode==1){
+			if (azimuth < 90.0 || azimuth > 270.0) {
+				// Côté NORD (Nuit ou hors zone de suivi) : retour à 0
+				position = 0;
+			} else {
+				// Côté SUD (Est -> Ouest) : proportionnel
+				// Plage Azimuth : 90 à 270 (soit une étendue de 180 degrés)
+				// Plage Servo : 0 à 100
+				// Formule : (AzimuthActuel - OffsetEst) * (PlageServo / PlageAzimuth)
+				position = (uint16_t)((azimuth - 90.0) * (100.0 / 180.0));
+			}
+        } else if (mode==0){
+        	printf("test");
         }
-
         // Sécurité pour ne pas dépasser 100 (bien que SERVO_set_position le gère aussi)
         if (position > 100) position = 100;
 

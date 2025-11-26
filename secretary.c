@@ -14,7 +14,7 @@
 static void find_command(char * buffer);
 static void echo_command(char * buffer);
 static bool str_begin_with(char * string, char * begin);
-
+static int mode=0;
 
 
 void SECRETARY_process_main(void)
@@ -147,6 +147,11 @@ static void find_command(char * buffer)
 		printf("\"gettime\\n\" - get the current time \n");
 		printf("\"help\\n\" - show this commands list \n");
 	}
+	else if(str_begin_with(buffer, "changemode"))
+		{
+			mode ^= 1;
+			printf("\nmode changed\n");
+		}
 	else
 		badstring = true;
 	if(printdate)
@@ -167,3 +172,9 @@ void maj2min(char* s) {
 		}
 	}
 }
+
+int SECRETARY_get_mode(void) {
+    return mode;
+}
+
+

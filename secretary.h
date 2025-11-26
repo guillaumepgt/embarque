@@ -11,5 +11,7 @@
 #include "stm32g4_utils.h"
 
 void SECRETARY_process_main(void);
+int SECRETARY_get_mode(void);
+
 
 #endif /* SECRETARY_H_ */
