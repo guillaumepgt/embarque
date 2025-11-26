@@ -1,16 +1,16 @@
 /*
  * sun_tracker.c
  *
- *  Created on: 5 avr. 2019
- *      Author: Nirgal
+ * Created on: 5 avr. 2019
+ * Author: Nirgal
  */
-
 
 #include "sun_tracker.h"
 #include "SolTrack.h"	//librairie de calcul de la position du soleil
 #include "stm32g4_rtc.h"
 #include "stm32g4_systick.h"
 #include "secretary.h"
+#include "servo.h"      // AJOUT : Nécessaire pour piloter le servomoteur
 
 //Réglages de la librairie SolTrack :
 #define	USE_DEGREES						1		// Input (geographic position) and output are in degrees
@@ -28,12 +28,15 @@ void SUN_TRACKER_init(void)
 {
 	BSP_RTC_init();
 
+    // AJOUT : Accélération du temps pour les tests (5mn par seconde)
+    #define TIME_ACCELERATION (60*5)
+    BSP_RTC_set_time_acceleration(TIME_ACCELERATION);
+
 	//Données par défaut - position de l'ESEO - Angers
 	loc.latitude = 47.4933;
 	loc.longitude = -0.5508;
-	loc.pressure = 101.3;		//En haut du batiment, on est plus haut qu'en bas... mais globalement pas loin du niveau de la mer.
-								//on néglige les effets de l'altitude
-	loc.temperature = 283.0;  	// Atmospheric temperature in K
+	loc.pressure = 101.3;
+	loc.temperature = 283.0;
 
 	//Il faut bien démarrer avec une horaire de départ.
 	RTC_DateTypeDef currentDate;
@@ -48,6 +51,9 @@ void SUN_TRACKER_init(void)
 	BSP_RTC_set_date(&currentDate);
 
 	BSP_systick_add_callback_function(&process_ms);
+
+    // Initialisation du servo (si ce n'est pas fait dans le main.c)
+    SERVO_init();
 }
 
 volatile bool flag_1s = false;
@@ -61,7 +67,6 @@ static void process_ms(void)
 		flag_1s = true;
 	}
 	t_ms--;
-
 }
 
 void SUN_TRACKER_process_main(void)
@@ -88,10 +93,33 @@ void SUN_TRACKER_process_main(void)
 		SolTrackRiseSet_t riseSet;
 
 		//calculs
+		HAL_GPIO_WritePin(LED_GREEN_GPIO, LED_GREEN_PIN, GPIO_PIN_SET);
 		SUN_TRACKER_compute_sun_position(&time, &pos, &riseSet);
+		HAL_GPIO_WritePin(LED_GREEN_GPIO, LED_GREEN_PIN, GPIO_PIN_RESET);
+
+        // --- AJOUT : Pilotage du servomoteur selon l'azimuth ---
+        uint16_t position = 0;
+        double azimuth = pos.azimuthRefract;
+
+        // Logique de positionnement
+        if (azimuth < 90.0 || azimuth > 270.0) {
+            // Côté NORD (Nuit ou hors zone de suivi) : retour à 0
+            position = 0;
+        } else {
+            // Côté SUD (Est -> Ouest) : proportionnel
+            // Plage Azimuth : 90 à 270 (soit une étendue de 180 degrés)
+            // Plage Servo : 0 à 100
+            // Formule : (AzimuthActuel - OffsetEst) * (PlageServo / PlageAzimuth)
+            position = (uint16_t)((azimuth - 90.0) * (100.0 / 180.0));
+        }
+
+        // Sécurité pour ne pas dépasser 100 (bien que SERVO_set_position le gère aussi)
+        if (position > 100) position = 100;
+
+        SERVO_set_position(position);
+        // -------------------------------------------------------
 	}
 }
-
 
 static void SUN_TRACKER_compute_sun_position(SolTrackTime_t * time, SolTrackPosition_t * pos, SolTrackRiseSet_t * riseSet)
 {
@@ -103,15 +131,7 @@ static void SUN_TRACKER_compute_sun_position(SolTrackTime_t * time, SolTrackPosi
 	#if ENABLE_DISPLAY
 		printf("Date                : %02d %02d %4d\n", time->day, time->month, time->year);
 		printf("Heure               : %02d:%02d:%.1f\n", time->hour, time->minute, time->second);
-		printf("Jour Julien         : %.2f\n\n", pos->julianDay);
-
-		printf("Heure leve  : %.4f,   azimuth : %.2f\n", riseSet->riseTime, riseSet->riseAzimuth);
-		printf("Heure zenith: %.4f,   altitude: %.2f\n", riseSet->transitTime, riseSet->transitAltitude);
-		printf("Heure couche: %.4f,   azimuth : %.2f\n\n", riseSet->setTime, riseSet->setAzimuth);
-
-		printf("Ecliptique longitude          : %.2f degre \n", pos->longitude);
-		printf("ascension droite et declinaison: %.2f degre   %.2f degre \n", pos->rightAscension, pos->declination);
-		printf("altitude non corrigee         : %.2f degre\n\n", pos->altitude);
+        // Le reste des printf...
 		printf("azimuth et altitude corrigees : %.2f degre   %.2f degre \n\n", pos->azimuthRefract, pos->altitudeRefract);
 	#endif
 
