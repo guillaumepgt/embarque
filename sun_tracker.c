@@ -19,7 +19,7 @@
 #define USE_NORTH_EQUALS_ZERO			1		// Azimuth: 0 = North, pi/2 (90deg) = East
 #define COMPUTE_REFRACTION_EQUATORIAL	1		// Compute refraction-corrected equatorial coordinates (Hour angle, declination): 0-no, 1-yes
 #define	COMPUTE_DISTANCE				1		// Compute the distance to the Sun in AU: 0-no, 1-yes
-#define ENABLE_DISPLAY 					1
+#define ENABLE_DISPLAY 					0
 
 static SolTrackLocation_t loc;
 static void process_ms(void);
@@ -137,7 +137,7 @@ static void SUN_TRACKER_compute_sun_position(SolTrackTime_t * time, SolTrackPosi
 
 	// Compute positions:
 	SolTrack(time, &loc, pos, USE_DEGREES, USE_NORTH_EQUALS_ZERO, COMPUTE_REFRACTION_EQUATORIAL, COMPUTE_DISTANCE);
-	#if !ENABLE_DISPLAY
+	#if ENABLE_DISPLAY
 		printf("Date                : %02d %02d %4d\n", time->day, time->month, time->year);
 		printf("Heure               : %02d:%02d:%.1f\n", time->hour, time->minute, time->second);
         // Le reste des printf...
