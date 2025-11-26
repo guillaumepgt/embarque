@@ -100,7 +100,7 @@ static void SUN_TRACKER_compute_sun_position(SolTrackTime_t * time, SolTrackPosi
 
 	// Compute positions:
 	SolTrack(time, &loc, pos, USE_DEGREES, USE_NORTH_EQUALS_ZERO, COMPUTE_REFRACTION_EQUATORIAL, COMPUTE_DISTANCE);
-	#if ENABLE_DISPLAY
+	#if !ENABLE_DISPLAY
 		printf("Date                : %02d %02d %4d\n", time->day, time->month, time->year);
 		printf("Heure               : %02d:%02d:%.1f\n", time->hour, time->minute, time->second);
 		printf("Jour Julien         : %.2f\n\n", pos->julianDay);

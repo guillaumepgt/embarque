@@ -63,44 +63,6 @@ int main(void)
 
 
 volatile uint32_t e;	//variable accessible depuis l'onglet expressions
-
-//cette fonction ne sert à rien d'autre qu'à montrer le rôle des opérateurs en C et s'entrainer à utiliser le débogueur
-void useless_function(void)
-{
-	static uint32_t n = 0;
-	volatile uint8_t a = 0xCA;
-	volatile bool b;
-	volatile uint32_t d;
-	volatile uint8_t c;
-
-	b = 0b10101010 || 0b11110000;
-	b = 0b10101010 && 0b11110000;
-	b = !42;
-	b = !0;
-
-	c = 0b10101010 & 0b11110000;
-	c = 0b10101010 ^ 0b11110000;
-	c = 0b10101010 | 0b11110000;
-	c = ~0b00001111;
-	c ^= c;
-
-	d = (0xFE << 16);
-	d |= ((uint32_t)(a))<<24;
-	d |= a;
-	d += 0xDE << 8;
-
-	e = 2976579765;
-
-	while(1)
-	{
-		b = BSP_UART_button(UART2_ID);
-		if(b)
-		{
-			n++;
-		}
-	}
-}
-
 #define TAB_SIZE        18
 
 void tab_cypher(void)
