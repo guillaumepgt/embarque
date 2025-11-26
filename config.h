@@ -30,7 +30,7 @@
 
 #define USE_ADC				1
 	/* Configuration pour activer les entrées analogiques souhaitées */
-	#define USE_IN1		1 //Broche correspondante: PA0
+	#define USE_IN1		0 //Broche correspondante: PA0
 	#define USE_IN2		0 //Broche correspondante: PA1
 	#define USE_IN3		0 //Broche correspondante: PA6
 	#define USE_IN4		0 //Broche correspondante: PA7
