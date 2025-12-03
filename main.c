@@ -7,6 +7,7 @@
  *******************************************************************************
  */
 
+#include "servo.h"
 #include "config.h"
 #include "stm32g4_sys.h"
 
@@ -17,6 +18,7 @@
 
 #include <stdio.h>
 
+#define PERIOD_TIMER   10
 
 void US_echo_falling_edge(uint8_t pin_number);
 
@@ -66,12 +68,11 @@ int main(void)
 	/* Configuration de la broche PA8 */
 	BSP_GPIO_pin_config(GPIOA, GPIO_PIN_8, GPIO_MODE_OUTPUT_PP,GPIO_NOPULL,GPIO_SPEED_FREQ_VERY_HIGH,GPIO_NO_AF);
 
+	BSP_TIMER_run_us(TIMER1_ID, PERIOD_TIMER*1000, false);
+	BSP_TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_1, 150, false, false);
 	/* Tâche de fond, boucle infinie, Infinite loop,... quelque soit son nom vous n'en sortirez jamais */
 	while (1)
 	{
-
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	}
 }
