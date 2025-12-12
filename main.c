@@ -7,12 +7,17 @@
 #include "stm32g4_uart.h"
 #include "stm32g4_utils.h"
 #include <stdio.h>
+#define DIST_NEAR_MM   200
+#define DIST_FAR_MM    600
+
 
 // Inclusion de nos modules
 #include "hcsr04.h"
 #include "servo.h" // Si vous l'utilisez encore
 
 #define PERIOD_TIMER   100 // 100ms pour laisser le temps au capteur
+
+uint32_t reference_period;
 
 int main(void)
 {
@@ -29,21 +34,21 @@ int main(void)
     BSP_GPIO_pin_config(GPIOA, GPIO_PIN_8, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_HIGH, GPIO_NO_AF);
     BSP_TIMER_run_us(TIMER1_ID, PERIOD_TIMER * 1000, false);
     BSP_TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_1, 150, false, false);
-    *(uint32_t*)0x40012c34 = 35; // ~35µs pulse width
+    reference_period = BSP_TIMER_get_period(TIMER4_ID);
+//    *(uint32_t*)0x40012c34 = 35; // ~35µs pulse width
 
     // --- INIT DU CAPTEUR (ECHO) ---
     HCSR04_init();
-
-
 
     while (1)
     {
         // On récupère la distance mesurée en tâche de fond par les interruptions
         uint32_t dist_mm = HCSR04_get_distance();
+        BSP_TIMER_run_us(TIMER1_ID, dist_mm * 1000, false);
 
         // On l'affiche
         printf("Distance : %lu mm \r", dist_mm); // \r pour réécrire sur la même ligne
 
-        HAL_Delay(200); // Pas besoin de spammer l'affichage
+        HAL_Delay(dist_mm); // Pas besoin de spammer l'affichage
     }
 }
