@@ -68,7 +68,7 @@ int main(void)
 	{
 		//state_machine();
 		//check_button();
-		process_test_photoresistor(1);
+		process_test_photoresistor(ADC_CHANNEL_0);
 	}
 }
 
