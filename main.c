@@ -150,15 +150,15 @@ void state_machine(void)
 
 void check_button()
 {
-	static bool pressed = 0;
+	static bool pressed = false;
 	button_event_t button_event;
 	button_event = BUTTON_state_machine();
 	if (button_event == BUTTON_EVENT_PRESS && !pressed) {
 		seuil = distance;
-		pressed=1;
+		pressed=true;
 		printf("Boutton appuyé");
 
-	} else pressed=0;
+	} else if (button_event == BUTTON_EVENT_NONE) pressed=false;
 }
 
 
