@@ -158,51 +158,8 @@ void check_button()
 }
 
 
-<<<<<<< HEAD
-
-/**
- * @brief La tension de la broche PA0 est envoyée sur l'UART
- */
-void process_test_photoresistor(uint16_t channel)
-{
-	int16_t value;
-	BSP_ADC_init();
-	LED_init();
-	while(1)
-	{
-		value = BSP_ADC_getValue(channel);
-		printf("Raw ADC value: %d\n",value);
-		HAL_Delay(500);
-	}
-}
-
-
-/**
- * @brief	Fonction de test pour valider le télémètre, la distance est affichée en mm via l'UART
- */
-void process_test_telemeter(GPIO_TypeDef * TRIG_GPIO, uint16_t TRIG_PIN, GPIO_TypeDef * ECHO_GPIO, uint16_t ECHO_PIN)
-{
-	uint8_t telemeter_id = 0;
-	uint16_t distance = 0;
-	BSP_systick_add_callback_function(&process_ms);
-	BSP_HCSR04_add(&telemeter_id, TRIG_GPIO, TRIG_PIN, ECHO_GPIO, ECHO_PIN);
-
-	while(1)
-	{
-		BSP_HCSR04_process_main();
-		if(!t)
-		{
-			printf("Distance: %d mm \r",  distance);
-
-			BSP_HCSR04_run_measure(telemeter_id);
-			t = HCSR04_TIMEOUT;
-		}
-		BSP_HCSR04_get_value(telemeter_id, &distance);
-	}
-=======
 void check_day(uint16_t channel)
 {
 	if (BSP_ADC_getValue(channel) < 2000) day = 0;
 	else day = 1;
->>>>>>> Guillaume
 }
