@@ -66,8 +66,9 @@ int main(void)
 	/* Tâche de fond, boucle infinie, Infinite loop,... quelque soit son nom vous n'en sortirez jamais */
 	while (1)
 	{
-		state_machine();
-		check_button();
+		//state_machine();
+		//check_button();
+		process_test_photoresistor(1);
 	}
 }
 
