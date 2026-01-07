@@ -158,7 +158,7 @@ void check_button()
 		pressed=true;
 		printf("Boutton appuyé");
 
-	} else if (button_event == BUTTON_EVENT_NONE) pressed=false;
+	} else if (button_event != BUTTON_EVENT_PRESS) pressed=false;
 }
 
 
