@@ -78,7 +78,7 @@ button_event_t BUTTON_state_machine(void)
 			case WAIT_BUTTON:
 				if(current_button)
 				{
-					printf("[BUTTON      ] button pressed\n");
+					//printf("[BUTTON      ] button pressed\n");
 					state = BUTTON_PRESSED;	//Changement d'état conditionné à "if(current_button)"
 				}
 				break;

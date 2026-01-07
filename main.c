@@ -58,6 +58,7 @@ int main(void)
 	BSP_UART_init(UART2_ID,115200);
 	BUTTON_init(GPIOA, GPIO_PIN_5);
 	BSP_ADC_init();
+	LED_init();
 
 	/* Indique que les printf sont dirigés vers l'UART2 */
 	BSP_SYS_set_std_usart(UART2_ID, UART2_ID, UART2_ID);
@@ -103,6 +104,7 @@ void state_machine(void)
 
 	// Récupération des évènements
 	bool new_measure_event = (BSP_HCSR04_get_value(telemeter_id, &distance) == HAL_OK)?true:false;
+	printf("Distance: %d mm, seuil : %d, jour : %d                                          \r",  distance, seuil, day);
 
 	switch(state)
 	{
@@ -114,12 +116,12 @@ void state_machine(void)
 			break;
 
 		case SCAN:
+			LED_set(LED_FLASH);
 			//printf("SCAN\r");
 			BSP_HCSR04_process_main();
 			BSP_HCSR04_get_value(telemeter_id, &distance);
 			if(t) break;
 
-			printf("Distance: %d mm, seuil : %d, jour : %d                                          \r",  distance, seuil, day);
 			BSP_HCSR04_run_measure(telemeter_id);
 			t = HCSR04_TIMEOUT;
 			if (distance<seuil) {
@@ -128,10 +130,10 @@ void state_machine(void)
 			break;
 
 		case PASSE:
+			LED_set(LED_ON);
 			//printf("PASSE\r");
 			BSP_HCSR04_process_main();
 			BSP_HCSR04_get_value(telemeter_id, &distance);
-			printf("Distance: %d mm Quelqu'un passe \r",  distance);
 
 			if(t) break;
 			BSP_HCSR04_run_measure(telemeter_id);
@@ -150,7 +152,7 @@ void check_button()
 	button_event_t button_event;
 	button_event = BUTTON_state_machine();
 	if (button_event == BUTTON_EVENT_PRESS && !pressed) {
-		seuil = distance;
+		seuil = distance*0.9;
 		pressed=true;
 		printf("Boutton appuyé");
 
