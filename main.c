@@ -66,8 +66,8 @@ int main(void)
 	/* Tâche de fond, boucle infinie, Infinite loop,... quelque soit son nom vous n'en sortirez jamais */
 	while (1)
 	{
-		state_machine();
 		check_button();
+		state_machine();
 	}
 }
 
@@ -98,7 +98,6 @@ void state_machine(void)
 	}
 
 	// Récupération des évènements
-	button_event_t button_event = BUTTON_state_machine();
 	bool new_measure_event = (BSP_HCSR04_get_value(telemeter_id, &distance) == HAL_OK)?true:false;
 
 	switch(state)

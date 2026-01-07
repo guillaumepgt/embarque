@@ -86,12 +86,15 @@ button_event_t BUTTON_state_machine(void)
 				if(current_button)
 				{
 					ret = BUTTON_EVENT_PRESS;
-				}
-				else
-				{
-					state= WAIT_BUTTON;
+					state = WAIT_RELEASE;
 				}
 				break;
+
+			case WAIT_RELEASE:
+				if (!current_button) state = WAIT_BUTTON;
+			break;
+
+
 
 			default:
 				state = INIT;	//N'est jamais sensé se produire.
