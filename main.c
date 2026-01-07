@@ -155,5 +155,6 @@ void check_button()
 
 void check_day(uint16_t channel)
 {
-	if (BSP_ADC_getValue(channel) < 100) day = 0;
+	if (BSP_ADC_getValue(channel) < 2000) day = 0;
+	else day = 1;
 }
