@@ -150,23 +150,17 @@ void state_machine(void)
 
 void check_button()
 {
+	static bool pressed = 0;
 	button_event_t button_event;
 	button_event = BUTTON_state_machine();
-	if (button_event == BUTTON_EVENT_SHORT_PRESS || button_event == BUTTON_EVENT_LONG_PRESS) seuil = distance;
+	if (button_event == BUTTON_EVENT_PRESS && !pressed) {
+		seuil = distance;
+		pressed=1;
+		printf("Boutton appuyé");
+
+	} else pressed=0;
 }
 
-void process_test_button(GPIO_TypeDef* gpio, uint32_t pin)
-{
-	LED_init();
-	BUTTON_init(gpio, pin);
-	button_event_t button_event;
-	while(1)
-	{
-		button_event = BUTTON_state_machine();
-		if (button_event == BUTTON_EVENT_LONG_PRESS) LED_set(LED_ON);
-		if (button_event == BUTTON_EVENT_SHORT_PRESS) LED_set(LED_BLINK);
-	}
-}
 
 
 /**

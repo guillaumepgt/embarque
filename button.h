@@ -3,6 +3,8 @@
  *
  *  Created on: 26 juin 2019
  *      Author: Nirgal
+ *  Modifié
+ *
  */
 
 #ifndef BUTTON_H_
@@ -14,8 +16,7 @@
 typedef enum
 {
 	BUTTON_EVENT_NONE,
-	BUTTON_EVENT_SHORT_PRESS,
-	BUTTON_EVENT_LONG_PRESS
+	BUTTON_EVENT_PRESS
 }button_event_t;
 
 void BUTTON_init(GPIO_TypeDef* gpio, uint32_t pin);
