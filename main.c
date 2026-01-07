@@ -23,7 +23,8 @@
 #include <stdio.h>
 
 static void state_machine(void);
-void check_button();
+void check_button(void);
+void check_day(uint16_t channel);
 void process_test_button(GPIO_TypeDef* gpio, uint32_t pin);
 void process_test_photoresistor(uint16_t adc_id);
 void process_test_telemeter(GPIO_TypeDef * TRIG_GPIO, uint16_t TRIG_PIN, GPIO_TypeDef * ECHO_GPIO, uint16_t ECHO_PIN);
@@ -31,6 +32,7 @@ void process_test_telemeter(GPIO_TypeDef * TRIG_GPIO, uint16_t TRIG_PIN, GPIO_Ty
 static volatile uint32_t t = 0;
 static uint16_t seuil = 100;
 static uint16_t distance = 0;
+static uint16_t day = 1;
 
 void process_ms(void)
 {
@@ -55,6 +57,7 @@ int main(void)
 	BSP_GPIO_enable();
 	BSP_UART_init(UART2_ID,115200);
 	BUTTON_init(GPIOA, GPIO_PIN_5);
+	BSP_ADC_init();
 
 	/* Indique que les printf sont dirigés vers l'UART2 */
 	BSP_SYS_set_std_usart(UART2_ID, UART2_ID, UART2_ID);
@@ -68,6 +71,7 @@ int main(void)
 	{
 		check_button();
 		state_machine();
+		check_day(0);
 	}
 }
 
@@ -115,7 +119,7 @@ void state_machine(void)
 			BSP_HCSR04_get_value(telemeter_id, &distance);
 			if(t) break;
 
-			printf("Distance: %d mm, seuil : %d                                           \r",  distance, seuil);
+			printf("Distance: %d mm, seuil : %d, jour : %d                                          \r",  distance, seuil, day);
 			BSP_HCSR04_run_measure(telemeter_id);
 			t = HCSR04_TIMEOUT;
 			if (distance<seuil) {
@@ -140,13 +144,6 @@ void state_machine(void)
 	}
 }
 
-
-
-/**
- * @brief Fonction de test du bouton, la LED clignote avec un appui court et reste allumée avec un appui long
- */
-
-
 void check_button()
 {
 	static bool pressed = false;
@@ -161,6 +158,7 @@ void check_button()
 }
 
 
+<<<<<<< HEAD
 
 /**
  * @brief La tension de la broche PA0 est envoyée sur l'UART
@@ -201,4 +199,10 @@ void process_test_telemeter(GPIO_TypeDef * TRIG_GPIO, uint16_t TRIG_PIN, GPIO_Ty
 		}
 		BSP_HCSR04_get_value(telemeter_id, &distance);
 	}
+=======
+void check_day(uint16_t channel)
+{
+	if (BSP_ADC_getValue(channel) < 2000) day = 0;
+	else day = 1;
+>>>>>>> Guillaume
 }
