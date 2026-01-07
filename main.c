@@ -124,7 +124,6 @@ void state_machine(void)
 			//printf("INSTALL\r");
 			BSP_HCSR04_process_main();
 			BSP_HCSR04_get_value(telemeter_id, &distance);
-			if(t) break;
 
 			BSP_HCSR04_run_measure(telemeter_id);
 			t = HCSR04_TIMEOUT;
