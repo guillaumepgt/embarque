@@ -23,11 +23,14 @@
 #include <stdio.h>
 
 static void state_machine(void);
+void check_button();
 void process_test_button(GPIO_TypeDef* gpio, uint32_t pin);
 void process_test_photoresistor(uint16_t adc_id);
 void process_test_telemeter(GPIO_TypeDef * TRIG_GPIO, uint16_t TRIG_PIN, GPIO_TypeDef * ECHO_GPIO, uint16_t ECHO_PIN);
 
 static volatile uint32_t t = 0;
+static uint16_t seuil = 100;
+static uint16_t distance = 0;
 
 void process_ms(void)
 {
@@ -51,18 +54,20 @@ int main(void)
 	/* Initialisation des périphériques utilisés dans votre programme */
 	BSP_GPIO_enable();
 	BSP_UART_init(UART2_ID,115200);
+	BUTTON_init(GPIOA, GPIO_PIN_5);
 
 	/* Indique que les printf sont dirigés vers l'UART2 */
 	BSP_SYS_set_std_usart(UART2_ID, UART2_ID, UART2_ID);
 
-	//process_test_button(...);
+	//process_test_button(GPIOA, GPIO_PIN_5);
 	//process_test_photoresistor(...);
-	//process_test_telemeter(...);
+	//process_test_telemeter(GPIOA, GPIO_PIN_8, GPIOB, GPIO_PIN_4);
 
 	/* Tâche de fond, boucle infinie, Infinite loop,... quelque soit son nom vous n'en sortirez jamais */
 	while (1)
 	{
 		state_machine();
+		check_button();
 	}
 }
 
@@ -70,8 +75,11 @@ void state_machine(void)
 {
 	typedef enum
 	{
-		INIT
-		// TODO: liste des états de la machine
+		INIT,
+		SCAN,
+		PASSE
+
+
 	}state_e;
 
 	static state_e state = INIT;
@@ -80,7 +88,6 @@ void state_machine(void)
 	previous_state = state;
 
 	static uint8_t telemeter_id = 0;
-	static uint16_t distance = 0;
 	static uint16_t detection_threshold = 0;
 
 	BSP_HCSR04_process_main();
@@ -97,10 +104,37 @@ void state_machine(void)
 	switch(state)
 	{
 		case INIT:
-			//TODO: INIT state
+			//printf("INIT\r");
+			BSP_systick_add_callback_function(&process_ms);
+			BSP_HCSR04_add(&telemeter_id, GPIOA, GPIO_PIN_8, GPIOB, GPIO_PIN_4);
+			state = SCAN;
 			break;
 
-		//TODO ...
+		case SCAN:
+			//printf("SCAN\r");
+			BSP_HCSR04_process_main();
+			BSP_HCSR04_get_value(telemeter_id, &distance);
+			if(t) break;
+
+			printf("Distance: %d mm, seuil : %d                                           \r",  distance, seuil);
+			BSP_HCSR04_run_measure(telemeter_id);
+			t = HCSR04_TIMEOUT;
+			if (distance<seuil) {
+				state= PASSE;
+			}
+			break;
+
+		case PASSE:
+			//printf("PASSE\r");
+			BSP_HCSR04_process_main();
+			BSP_HCSR04_get_value(telemeter_id, &distance);
+			printf("Distance: %d mm Quelqu'un passe \r",  distance);
+
+			if(t) break;
+			BSP_HCSR04_run_measure(telemeter_id);
+			t = HCSR04_TIMEOUT;
+			if (distance>seuil) state = SCAN;
+			break;
 
         default:
         	break;
@@ -108,9 +142,19 @@ void state_machine(void)
 }
 
 
+
 /**
  * @brief Fonction de test du bouton, la LED clignote avec un appui court et reste allumée avec un appui long
  */
+
+
+void check_button()
+{
+	button_event_t button_event;
+	button_event = BUTTON_state_machine();
+	if (button_event == BUTTON_EVENT_SHORT_PRESS || button_event == BUTTON_EVENT_LONG_PRESS) seuil = distance;
+}
+
 void process_test_button(GPIO_TypeDef* gpio, uint32_t pin)
 {
 	LED_init();
@@ -157,7 +201,7 @@ void process_test_telemeter(GPIO_TypeDef * TRIG_GPIO, uint16_t TRIG_PIN, GPIO_Ty
 		BSP_HCSR04_process_main();
 		if(!t)
 		{
-			printf("Distance: %d mm \n",  distance);
+			printf("Distance: %d mm \r",  distance);
 
 			BSP_HCSR04_run_measure(telemeter_id);
 			t = HCSR04_TIMEOUT;
