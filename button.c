@@ -10,6 +10,8 @@
 #include "stm32g4_systick.h"
 #include "stdio.h"
 
+#define LONG_PRESS_DURATION	1000	//unité : [1ms] => 1 seconde.
+
 static void process_ms(void);
 
 static volatile bool flag_10ms;
@@ -78,24 +80,33 @@ button_event_t BUTTON_state_machine(void)
 			case WAIT_BUTTON:
 				if(current_button)
 				{
-					//printf("[BUTTON      ] button pressed\n");
+					printf("[BUTTON      ] button pressed\n");
+					t=LONG_PRESS_DURATION;	//Action réalisée sur la transition.
 					state = BUTTON_PRESSED;	//Changement d'état conditionné à "if(current_button)"
 				}
 				break;
 			case BUTTON_PRESSED:
-				if(current_button)
+				if(t==0)
 				{
-					ret = BUTTON_EVENT_PRESS;
-					state = WAIT_RELEASE;
+					ret = BUTTON_EVENT_LONG_PRESS;
+					printf("[BUTTON      ] long press event\n");
+					state = WAIT_RELEASE;		//le temps est écoulé, c'était un appui long !
+				}
+				else if(!current_button)
+				{
+					ret = BUTTON_EVENT_SHORT_PRESS;
+					printf("[BUTTON      ] short press event\n");
+					state = WAIT_BUTTON;	//le bouton a été relâché avant l'écoulement du temps, c'était un appui court !
 				}
 				break;
 
 			case WAIT_RELEASE:
-				if (!current_button) state = WAIT_BUTTON;
-			break;
-
-
-
+				if(!current_button)
+				{
+					printf("[BUTTON      ] release button after long press\n");
+					state = WAIT_BUTTON;
+				}
+				break;
 			default:
 				state = INIT;	//N'est jamais sensé se produire.
 				break;
@@ -103,4 +114,3 @@ button_event_t BUTTON_state_machine(void)
 	}
 	return ret;
 }
-

@@ -70,7 +70,6 @@ int main(void)
 	/* Tâche de fond, boucle infinie, Infinite loop,... quelque soit son nom vous n'en sortirez jamais */
 	while (1)
 	{
-		check_button();
 		state_machine();
 		check_day(0);
 	}
@@ -81,6 +80,7 @@ void state_machine(void)
 	typedef enum
 	{
 		INIT,
+		INSTALL,
 		SCAN,
 		PASSE
 
@@ -94,6 +94,8 @@ void state_machine(void)
 
 	static uint8_t telemeter_id = 0;
 	static uint16_t detection_threshold = 0;
+	button_event_t button_event;
+	button_event = BUTTON_state_machine();
 
 	BSP_HCSR04_process_main();
 	if(!t)
@@ -112,7 +114,22 @@ void state_machine(void)
 			//printf("INIT\r");
 			BSP_systick_add_callback_function(&process_ms);
 			BSP_HCSR04_add(&telemeter_id, GPIOA, GPIO_PIN_8, GPIOB, GPIO_PIN_4);
-			state = SCAN;
+			state = INSTALL;
+			break;
+
+		case INSTALL:
+			LED_set(LED_BLINK);
+			//printf("INSTALL\r");
+			BSP_HCSR04_process_main();
+			BSP_HCSR04_get_value(telemeter_id, &distance);
+			if(t) break;
+
+			BSP_HCSR04_run_measure(telemeter_id);
+			t = HCSR04_TIMEOUT;
+			if (button_event == BUTTON_EVENT_SHORT_PRESS){
+				state = SCAN;
+				seuil=(uint16_t) 0.9*distance;
+			}
 			break;
 
 		case SCAN:
@@ -126,6 +143,9 @@ void state_machine(void)
 			t = HCSR04_TIMEOUT;
 			if (distance<seuil) {
 				state= PASSE;
+			}
+			else if (button_event == BUTTON_EVENT_LONG_PRESS){
+				state = INSTALL;
 			}
 			break;
 
@@ -146,18 +166,6 @@ void state_machine(void)
 	}
 }
 
-void check_button()
-{
-	static bool pressed = false;
-	button_event_t button_event;
-	button_event = BUTTON_state_machine();
-	if (button_event == BUTTON_EVENT_PRESS && !pressed) {
-		seuil = distance*0.9;
-		pressed=true;
-		printf("Boutton appuyé");
-
-	} else if (button_event != BUTTON_EVENT_PRESS) pressed=false;
-}
 
 
 void check_day(uint16_t channel)
