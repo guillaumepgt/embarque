@@ -33,6 +33,7 @@ static volatile uint32_t t = 0;
 static uint16_t seuil = 100;
 static uint16_t distance = 0;
 static uint16_t day = 1;
+static button_event_t button_event;
 
 void process_ms(void)
 {
@@ -70,6 +71,7 @@ int main(void)
 	/* Tâche de fond, boucle infinie, Infinite loop,... quelque soit son nom vous n'en sortirez jamais */
 	while (1)
 	{
+		button_event = BUTTON_state_machine();
 		state_machine();
 		check_day(0);
 	}
@@ -94,8 +96,8 @@ void state_machine(void)
 
 	static uint8_t telemeter_id = 0;
 	static uint16_t detection_threshold = 0;
-	button_event_t button_event;
-	button_event = BUTTON_state_machine();
+	//button_event_t button_event;
+	//button_event = BUTTON_state_machine();
 
 	BSP_HCSR04_process_main();
 	if(!t)
@@ -106,7 +108,7 @@ void state_machine(void)
 
 	// Récupération des évènements
 	bool new_measure_event = (BSP_HCSR04_get_value(telemeter_id, &distance) == HAL_OK)?true:false;
-	printf("Distance: %d mm, seuil : %d, jour : %d                                          \r",  distance, seuil, day);
+	//printf("Distance: %d mm, seuil : %d, jour : %d                                          \r",  distance, seuil, day);
 
 	switch(state)
 	{
@@ -128,7 +130,7 @@ void state_machine(void)
 			t = HCSR04_TIMEOUT;
 			if (button_event == BUTTON_EVENT_SHORT_PRESS){
 				state = SCAN;
-				seuil=(uint16_t) 0.9*distance;
+				seuil = distance;
 			}
 			break;
 
