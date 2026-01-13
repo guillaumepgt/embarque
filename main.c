@@ -30,9 +30,9 @@ void process_test_photoresistor(uint16_t adc_id);
 void process_test_telemeter(GPIO_TypeDef * TRIG_GPIO, uint16_t TRIG_PIN, GPIO_TypeDef * ECHO_GPIO, uint16_t ECHO_PIN);
 
 static volatile uint32_t t = 0;
-static uint16_t seuil = 100;
 static uint16_t distance = 0;
 static bool day = 1;
+
 static button_event_t button_event;
 
 void process_ms(void)
@@ -41,7 +41,6 @@ void process_ms(void)
 		t--;
 }
 
-static uint16_t count = 0;
 
 /**
   * @brief  Point d'entrée de votre application
@@ -96,6 +95,8 @@ void state_machine(void)
 	previous_state = state;
 
 	static uint8_t telemeter_id = 0;
+	static uint16_t count = 0;
+	static uint8_t seuil = 100;
 	//static uint16_t detection_threshold = 0;
 	//button_event_t button_event;
 	//button_event = BUTTON_state_machine();
@@ -161,7 +162,10 @@ void state_machine(void)
 			if(t) break;
 			BSP_HCSR04_run_measure(telemeter_id);
 			t = HCSR04_TIMEOUT;
-			if (distance>seuil) state = SCAN;
+			if (distance>seuil) {
+				count++;
+				state = SCAN;
+			}
 			break;
 
 		case NUIT:
