@@ -32,7 +32,7 @@ void process_test_telemeter(GPIO_TypeDef * TRIG_GPIO, uint16_t TRIG_PIN, GPIO_Ty
 static volatile uint32_t t = 0;
 static uint16_t seuil = 100;
 static uint16_t distance = 0;
-static uint16_t day = 1;
+static bool day = 1;
 static button_event_t button_event;
 
 void process_ms(void)
@@ -84,18 +84,19 @@ void state_machine(void)
 		INIT,
 		INSTALL,
 		SCAN,
-		PASSE
+		PASSE,
+		NUIT
 
 
 	}state_e;
 
 	static state_e state = INIT;
 	static state_e previous_state = INIT;
-	bool entry = (state!=previous_state)?true:false;	//ce booléen sera vrai seulement 1 fois après chaque changement d'état.
+	//bool entry = (state!=previous_state)?true:false;	//ce booléen sera vrai seulement 1 fois après chaque changement d'état.
 	previous_state = state;
 
 	static uint8_t telemeter_id = 0;
-	static uint16_t detection_threshold = 0;
+	//static uint16_t detection_threshold = 0;
 	//button_event_t button_event;
 	//button_event = BUTTON_state_machine();
 
@@ -148,6 +149,7 @@ void state_machine(void)
 			else if (button_event == BUTTON_EVENT_LONG_PRESS){
 				state = INSTALL;
 			}
+			else if (!day) state = NUIT;
 			break;
 
 		case PASSE:
@@ -160,6 +162,12 @@ void state_machine(void)
 			BSP_HCSR04_run_measure(telemeter_id);
 			t = HCSR04_TIMEOUT;
 			if (distance>seuil) state = SCAN;
+			break;
+
+		case NUIT:
+			LED_set(LED_OFF);
+			//printf("NUIT\r);
+			if (day) state = SCAN;
 			break;
 
         default:
