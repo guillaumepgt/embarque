@@ -47,38 +47,29 @@ void process_ms(void)
   */
 int main(void)
 {
-	/* Cette ligne doit rester la première de votre main !
-	 * Elle permet d'initialiser toutes les couches basses des drivers (Hardware Abstraction Layer),
-	 * condition préalable indispensable à l'exécution des lignes suivantes.
-	 */
-	HAL_Init();
 
-	/* Initialisation des périphériques utilisés dans votre programme */
-	BSP_GPIO_enable();
-	BSP_UART_init(UART2_ID,115200);
-	BUTTON_init(GPIOA, GPIO_PIN_5);
-	BSP_ADC_init();
-	LED_init();
+	HAL_Init(); //Initialisation de la bibliothèque HAL
 
-	/* Indique que les printf sont dirigés vers l'UART2 */
-	BSP_SYS_set_std_usart(UART2_ID, UART2_ID, UART2_ID);
+	BSP_GPIO_enable(); //Activation de l'horloge des ports GPIO
+	BSP_UART_init(UART2_ID,115200); //Initialisation de l'UART2 à 115200 bauds pour l'affichage
+	BUTTON_init(GPIOA, GPIO_PIN_5); //Initialisation du bouton (pin A5)
+	BSP_ADC_init(); //Initialisation de l'ADC
+	LED_init();    //Initialisation de la LED verte (pin B8)
 
-	//process_test_button(GPIOA, GPIO_PIN_5);
-	//process_test_photoresistor(...);
-	//process_test_telemeter(GPIOA, GPIO_PIN_8, GPIOB, GPIO_PIN_4);
+	BSP_SYS_set_std_usart(UART2_ID, UART2_ID, UART2_ID); //Redirection de la sortie standard sur l'UART2
 
-	/* Tâche de fond, boucle infinie, Infinite loop,... quelque soit son nom vous n'en sortirez jamais */
+	//Boucle principale
 	while (1)
 	{
-		button_event = BUTTON_state_machine();
-		state_machine();
-		check_day(0);
+		button_event = BUTTON_state_machine(); //Récupération des événements du bouton
+		state_machine();  //Machine à états principale
+		check_day(0);  //Vérification du jour/nuit via la photo-résistance
 	}
 }
-
+// Machine à états principale
 void state_machine(void)
 {
-	typedef enum
+	typedef enum //Définition des états possibles
 	{
 		INIT,
 		INSTALL,
@@ -90,114 +81,107 @@ void state_machine(void)
 
 	}state_e;
 
-	static state_e state = INIT;
-	static state_e previous_state = INIT;
-	//bool entry = (state!=previous_state)?true:false;	//ce booléen sera vrai seulement 1 fois après chaque changement d'état.
-	previous_state = state;
+	static state_e state = INIT; //On initialise l'état INIT
+	static state_e previous_state = INIT; //Variable pour stocker l'état précédent
+	previous_state = state; //Mise à jour de l'état précédent
 
-	static uint8_t telemeter_id = 0;
-	static uint16_t count = 0;
-	static uint8_t seuil = 100;
-	static utint_t seuilPersonne = 100;
-	//static uint16_t detection_threshold = 0;
-	//button_event_t button_event;
-	//button_event = BUTTON_state_machine();
+	static uint8_t telemeter_id = 0; //Identifiant du télémètre HC-SR04 (au cas où on en aurait plusieurs)
+	static uint16_t count = 0;  //Compteur de personnes
+	static uint8_t seuil = 100; //Seuil de détection (en mm, valeur arbitraire puisqu'elle sera calibrée lors de l'installation)
+	static uint8_t seuilPersonnes = 100; //Seuil de personnes avant arrêt (valeur arbitraire)
 
-	BSP_HCSR04_process_main();
+	BSP_HCSR04_process_main(); //Traitement principal des télémètres HC-SR04
 	if(!t)
 	{
-		BSP_HCSR04_run_measure(telemeter_id);
-		t = HCSR04_TIMEOUT;
+		BSP_HCSR04_run_measure(telemeter_id); //Lancement d'une nouvelle mesure
+		t = HCSR04_TIMEOUT; //Remise à zéro du timer
 	}
 
-	// Récupération des évènements
-	bool new_measure_event = (BSP_HCSR04_get_value(telemeter_id, &distance) == HAL_OK)?true:false;
-	//printf("Distance: %d mm, seuil : %d, jour : %d                                          \r",  distance, seuil, day);
+	bool new_measure_event = (BSP_HCSR04_get_value(telemeter_id, &distance) == HAL_OK)?true:false; //Vérification de la disponibilité d'une nouvelle mesure
 
 	switch(state)
 	{
-		case INIT:
-			//printf("INIT\r");
-			BSP_systick_add_callback_function(&process_ms);
-			BSP_HCSR04_add(&telemeter_id, GPIOA, GPIO_PIN_8, GPIOB, GPIO_PIN_4);
-			state = INSTALL;
+		case INIT: // Cas INIT: initialisation des modules
+			BSP_systick_add_callback_function(&process_ms); 
+			BSP_HCSR04_add(&telemeter_id, GPIOA, GPIO_PIN_8, GPIOB, GPIO_PIN_4);//Initialisation d'un télémètre HC-SR04
+			state = INSTALL; //On passe à l'état INSTALL
 			break;
 
-		case INSTALL:
-			LED_set(LED_BLINK);
-			//printf("INSTALL\r");
-			BSP_HCSR04_process_main();
-			BSP_HCSR04_get_value(telemeter_id, &distance);
+		case INSTALL: // Cas INSTALL: calibration du seuil de détection
+			LED_set(LED_BLINK); //Clignotement lent de la LED pour indiquer le mode d'installation
+			BSP_HCSR04_process_main(); //Traitement principal des télémètres HC-SR04
+			BSP_HCSR04_get_value(telemeter_id, &distance); //Récupération de la dernière mesure
 
-			BSP_HCSR04_run_measure(telemeter_id);
-			t = HCSR04_TIMEOUT;
+			BSP_HCSR04_run_measure(telemeter_id); //Lancement d'une nouvelle mesure
+			t = HCSR04_TIMEOUT; //Remise à zéro du timer
 			if (button_event == BUTTON_EVENT_SHORT_PRESS){
-				state = SCAN;
-				seuil = distance;
+				state = SCAN; /// On passe à l'état SCAN si le bouton est pressé court
+				seuil = distance; //On enregistre la distance mesurée comme seuil de détection
 			}
 			break;
 
-		case SCAN:
-			LED_set(LED_FLASH);
-			//printf("SCAN\r");
+		case SCAN:  // Cas SCAN: attente de detection d'un passage
+			LED_set(LED_FLASH); //Clignotement rapide de la LED pour indiquer le mode scan
 			BSP_HCSR04_process_main();
 			BSP_HCSR04_get_value(telemeter_id, &distance);
 			if(t) break;
 
 			BSP_HCSR04_run_measure(telemeter_id);
 			t = HCSR04_TIMEOUT;
-			if (distance<seuil) {
-				state= PASSE;
+			if (distance<seuil) {  //Si la distance mesurée est inférieure au seuil, on considère qu'une personne est en train de passer
+				state= PASSE; //On passe à l'état PASSE
 			}
-			else if (button_event == BUTTON_EVENT_LONG_PRESS){
-				state = INSTALL;
+			else if (button_event == BUTTON_EVENT_LONG_PRESS){ //Si le bouton est pressé longuement, on retourne en mode INSTALL
+				state = INSTALL; //on passe à l'état INSTALL
 			}
-			else if (!day) state = NUIT;
+			else if (!day) state = NUIT; //Si c'est la nuit, on passe à l'état NUIT
 			break;
 
-		case PASSE:
-			LED_set(LED_ON);
-			//printf("PASSE\r");
-			BSP_HCSR04_process_main();
+		case PASSE: // Cas PASSE: une personne est en train de passer, on attent qu'elle soit complètement passée
+			LED_set(LED_ON); //Allumage fixe de la LED pour indiquer le mode passage
+			BSP_HCSR04_process_main(); 
 			BSP_HCSR04_get_value(telemeter_id, &distance);
 
 			if(t) break;
 			BSP_HCSR04_run_measure(telemeter_id);
 			t = HCSR04_TIMEOUT;
-			if (distance>seuil) {
-				count++;
-				if (count<seuilPersonnes) state = SCAN;
-				else state = STOP;
+			if (distance>seuil) { //Si la distance mesurée est supérieure au seuil, on considère que la personne est passée
+				count++; //On incrémente le compteur de personnes
+				if (count<seuilPersonnes) state = SCAN; //Si le compteur est inférieur au seuil, on retourne en mode SCAN
+				else state = STOP; //Sinon, on passe à l'état STOP (on a atteint le nombre de personnes maximum)
 			}
 			break;
 
-		case NUIT:
-			LED_set(LED_OFF);
-			//printf("NUIT\r);
-			if (day) state = SCAN;
+		case NUIT: // Cas NUIT: mode basse consommation la nuit (on considère qu'il n'y a pas de passage)
+			LED_set(LED_OFF); //On éteint la LED pour indiquer le mode nuit
+			if (day) state = SCAN; //Si c'est le jour, on retourne en mode SCAN
+			else if (button_event == BUTTON_EVENT_LONG_PRESS) { //Si le bouton est pressé longuement, on retourne en mode INSTALL
+				state = INSTALL; //on passe à l'état INSTALL
+				count=0; //reset du compteur
+			}
 			break;
 
-		case STOP:
-			LED_set(LED_OFF);
-			//printf("Nombre de gens : %d atteint",seuil);
-			if (button_event == BUTTON_EVENT_SHORT_PRESS){
-				state = SCAN;
-				count=0;
-			} else if (button_event == BUTTON_EVENT_LONG_PRESS) {
-				state = INSTALL;
-				count=0;
+		case STOP: // Cas STOP: arrêt du comptage après avoir atteint le seuil de personnes
+			LED_set(LED_OFF); //On éteint la LED pour indiquer le mode arrêt
+			if (button_event == BUTTON_EVENT_SHORT_PRESS){ //Si le bouton est pressé court, on retourne en mode SCAN
+				state = SCAN; //on passe à l'état SCAN
+				count=0; //reset du compteur
+			} else if (button_event == BUTTON_EVENT_LONG_PRESS) { //Si le bouton est pressé longuement, on retourne en mode INSTALL
+				state = INSTALL; //on passe à l'état INSTALL
+				count=0; //reset du compteur
 			}
 
 
-        default:
+        default: // Sécurité: retour à l'état INIT en cas d'état inconnu
+			state = INIT; //On passe à l'état INIT
         	break;
 	}
 }
 
 
 
-void check_day(uint16_t channel)
+void check_day(uint16_t channel) //Vérification jour/nuit via la photo-résistance connectée à l'ADC
 {
-	if (BSP_ADC_getValue(channel) < 2000) day = 0;
-	else day = 1;
+	if (BSP_ADC_getValue(channel) < 2000) day = 0; //Seuil pour déterminer si c'est la nuit
+	else day = 1; //Sinon, c'est le jour
 }
