@@ -84,7 +84,8 @@ void state_machine(void)
 		INSTALL,
 		SCAN,
 		PASSE,
-		NUIT
+		NUIT,
+		STOP
 
 
 	}state_e;
@@ -97,6 +98,7 @@ void state_machine(void)
 	static uint8_t telemeter_id = 0;
 	static uint16_t count = 0;
 	static uint8_t seuil = 100;
+	static utint_t seuilPersonne = 100;
 	//static uint16_t detection_threshold = 0;
 	//button_event_t button_event;
 	//button_event = BUTTON_state_machine();
@@ -164,7 +166,8 @@ void state_machine(void)
 			t = HCSR04_TIMEOUT;
 			if (distance>seuil) {
 				count++;
-				state = SCAN;
+				if (count<seuilPersonnes) state = SCAN;
+				else state = STOP;
 			}
 			break;
 
@@ -173,6 +176,18 @@ void state_machine(void)
 			//printf("NUIT\r);
 			if (day) state = SCAN;
 			break;
+
+		case STOP:
+			LED_set(LED_OFF);
+			//printf("Nombre de gens : %d atteint",seuil);
+			if (button_event == BUTTON_EVENT_SHORT_PRESS){
+				state = SCAN;
+				count=0;
+			} else if (button_event == BUTTON_EVENT_LONG_PRESS) {
+				state = INSTALL;
+				count=0;
+			}
+
 
         default:
         	break;
